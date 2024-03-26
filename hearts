@@ -1,0 +1,89 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace Hearts
+{
+    public partial class Form1 : Form
+    {
+        public Form1()
+        {
+            InitializeComponent();
+        
+        }
+
+        private void label1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            // Check for duplicate names
+            List<string> playerNames = new List<string>
+        {
+            player1.Text,
+            player2.Text,
+            player3.Text,
+            player4.Text
+        };
+
+            if (playerNames.Distinct().Count() < 4)
+            {
+                // Display an error message if there are duplicate names
+                MessageBox.Show("Please enter unique names for all players.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            // Check if any of the player name textboxes are empty or contain numbers
+            if (ContainsNumbers(player1.Text) ||
+                ContainsNumbers(player2.Text) ||
+                ContainsNumbers(player3.Text) ||
+                ContainsNumbers(player4.Text))
+            {
+                // Display an error message if any player name contains numbers
+                MessageBox.Show("Please enter a valid name for all players (No numbers please)", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            // Check if any of the player name textboxes are empty
+            if (string.IsNullOrWhiteSpace(player1.Text) ||
+                string.IsNullOrWhiteSpace(player2.Text) ||
+                string.IsNullOrWhiteSpace(player3.Text) ||
+                string.IsNullOrWhiteSpace(player4.Text))
+            {
+                // Display an error message if any player name is empty
+                MessageBox.Show("Please enter a name for all players.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+        }
+
+        // Method to check if a string contains numbers
+        private bool ContainsNumbers(string input)
+        {
+            return input.Any(char.IsDigit);
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void exitButton_Click(object sender, EventArgs e)
+        {
+            Application.Exit();
+        }
+
+        private void resetButton_Click(object sender, EventArgs e)
+        {
+            Application.Restart();
+        }
+    }
+}
