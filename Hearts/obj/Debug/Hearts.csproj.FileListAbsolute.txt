@@ -1,0 +1,10 @@
+C:\Users\Matthew de Kock\source\repos\Hearts\Hearts\bin\Debug\Hearts.exe.config
+C:\Users\Matthew de Kock\source\repos\Hearts\Hearts\bin\Debug\Hearts.exe
+C:\Users\Matthew de Kock\source\repos\Hearts\Hearts\bin\Debug\Hearts.pdb
+C:\Users\Matthew de Kock\source\repos\Hearts\Hearts\obj\Debug\Hearts.csproj.AssemblyReference.cache
+C:\Users\Matthew de Kock\source\repos\Hearts\Hearts\obj\Debug\Hearts.Form1.resources
+C:\Users\Matthew de Kock\source\repos\Hearts\Hearts\obj\Debug\Hearts.Properties.Resources.resources
+C:\Users\Matthew de Kock\source\repos\Hearts\Hearts\obj\Debug\Hearts.csproj.GenerateResource.cache
+C:\Users\Matthew de Kock\source\repos\Hearts\Hearts\obj\Debug\Hearts.csproj.CoreCompileInputs.cache
+C:\Users\Matthew de Kock\source\repos\Hearts\Hearts\obj\Debug\Hearts.exe
+C:\Users\Matthew de Kock\source\repos\Hearts\Hearts\obj\Debug\Hearts.pdb
