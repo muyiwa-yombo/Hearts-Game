@@ -1,6 +1,8 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\Hearts"
   ],
+  "SelectedNode": "\\Hearts\\Hearts.csproj",
   "PreviewInSolutionExplorer": false
 }
