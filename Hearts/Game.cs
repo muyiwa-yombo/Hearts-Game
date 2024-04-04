@@ -6,40 +6,117 @@ using System.Threading.Tasks;
 
 namespace Hearts
 {
-    public class Game
+public class Game
+{
+    public List<Player> Players { get; set; }
+    public Deck Deck { get; set; }
+    public List<Trick> Tricks { get; set; }
+
+    public Trick CurrentTrick { get; set; } // Add this line
+    public int CurrentPlayerIndex { get; set; }
+    public int ScoreLimit { get; set; }
+    public Player Winner { get; private set; }
+
+    public Game(List<string> playerNames, int scoreLimit)
     {
-        public List<Player> Players { get; set; }
-        public Deck Deck { get; set; }
-        public List<Trick> Tricks { get; set; }
-        public int CurrentPlayerIndex { get; set; }
-        public int ScoreLimit { get; set; }
-        public Player Winner { get; private set; }
-
-        public Game(List<string> playerNames, int scoreLimit)
+        Players = new List<Player>();
+        foreach (var name in playerNames)
         {
-            Players = new List<Player>();
-            foreach (var name in playerNames)
-            {
-                Players.Add(new Player(name));
-            }
+            Players.Add(new Player(name));
+        }
 
-            Deck = new Deck();
-            Tricks = new List<Trick>();
-            CurrentPlayerIndex = 0;
-            ScoreLimit = scoreLimit;
+        Deck = new Deck();
+        Tricks = new List<Trick>();
+        CurrentPlayerIndex = 1;
+        ScoreLimit = scoreLimit;
+    }
+
+        public bool IsRoundOver()
+        {
+            // Check if all players have no cards left in their hands
+            return Players.All(player => player.Hand.Count == 0);
         }
 
         public void StartGame()
-        {
-            Deck.Shuffle();
-            DealCards();
+    {
+        Deck.Shuffle();
+        DealCards();
             // Start the first trick
+        DetermineStartingPlayer();
             PlayTrick();
+
         }
 
-        private void DealCards()
+        public void UpdateScores()
         {
-            for (int i = 0; i < 13; i++)
+            foreach (var player in Players)
+            {
+                player.Score += player.CollectedCards.Count(card => card.Suit == Suit.Hearts);
+                if (player.CollectedCards.Any(card => card.Suit == Suit.Spades && card.Value == 12))
+                {
+                    player.Score += 13;
+                }
+            }
+        }
+
+        public bool IsGameOver()
+        {
+            // Check if any player has reached or exceeded the score limit
+            return Players.Any(player => player.Score >= ScoreLimit);
+        }
+
+
+
+        public void PlayTrick()
+    {
+            CurrentTrick = new Trick();
+
+            for (int i = 0; i < Players.Count; i++)
+            {
+                Card card = Players[CurrentPlayerIndex].PlayCard(0); // Implement PlayCard in Player class
+                CurrentTrick.AddCard(card, Players[CurrentPlayerIndex]);
+                NextPlayer();
+            }
+
+            if (CurrentTrick.Winner != null)
+            {
+                CurrentTrick.DetermineWinner(Players);
+                Player winner = CurrentTrick.Winner;
+                winner.CollectedCards.AddRange(CurrentTrick.CardsPlayed); // Assuming Player has a CollectedCards property
+                Tricks.Add(CurrentTrick);
+
+                if (IsRoundOver())
+                {
+                    Scoring.UpdateScores(Players,Tricks);
+                    if (IsGameOver())
+                    {
+                        EndGame();
+                    }
+                    else
+                    {
+                        StartNewRound();
+                    }
+                }
+            }
+        }
+
+    private void EndGame()
+    {
+
+            Winner = Players.OrderBy(player => player.Score).FirstOrDefault();
+    }
+        public void NextPlayer()
+        {
+            // Move to the next player's turn
+            CurrentPlayerIndex = (CurrentPlayerIndex + 1) % Players.Count;
+        }
+
+        public void DealCards()
+        {
+            Deck.Shuffle();
+            int cardsPerPlayer = Deck.cards.Count / Players.Count;
+
+            for (int i = 0; i < cardsPerPlayer; i++)
             {
                 foreach (var player in Players)
                 {
@@ -47,43 +124,75 @@ namespace Hearts
                 }
             }
         }
-
-        public void PlayTrick()
+        public void DetermineStartingPlayer()
         {
-            Trick trick = new Trick();
-
             for (int i = 0; i < Players.Count; i++)
             {
-                // Assume PlayCard returns the card the player wants to play
-                Card card = Players[CurrentPlayerIndex].PlayCard(0); // You'll need to implement PlayCard
-                trick.AddCard(card, Players[CurrentPlayerIndex]);
-                CurrentPlayerIndex = (CurrentPlayerIndex + 1) % Players.Count;
-            }
-
-            // Determine the winner of the trick and update scores
-            // You'll need to implement logic to determine the winner based on the rules of Hearts
-            Player winner = trick.Winner;
-            winner.Score += Scoring.CalculateScore(trick);
-
-            Tricks.Add(trick);
-
-            // Check if any player has reached the score limit
-            if (Players.Any(player => player.Score >= ScoreLimit))
-            {
-                EndGame();
-            }
-            else
-            {
-                PlayTrick();
+                if (Players[i].Hand.Any(card => card.Suit == Suit.Clubs && card.Value == 2))
+                {
+                    CurrentPlayerIndex = i;
+                    break;
+                }
             }
         }
 
-        private void EndGame()
+        public void StartNewRound()
         {
-            // Determine the winner of the game based on the lowest score
-            Winner = Players.OrderBy(player => player.Score).FirstOrDefault();
-            // Handle the end of the game (e.g., display the winner, reset the game, etc.)
+            // Reset the game state for a new round
+            foreach (var player in Players)
+            {
+                player.Hand.Clear();
+                player.CollectedCards.Clear();
+            }
+            Deck.Shuffle();
+            DealCards();
+            // Determine the starting player for the new round
+            // For example, the player holding the two of clubs
         }
+
+        public Player DetermineRoundWinner(Trick currentTrick)
+        {
+            Card winningCard = null;
+            Player roundWinner = null;
+
+
+            for (int i = 0; i < currentTrick.CardsPlayed.Count; i++)
+            {
+                Card card = currentTrick.CardsPlayed[i];
+                if (winningCard == null || (card.Suit == currentTrick.LeadingSuit && card.Value > winningCard.Value))
+                {
+                    winningCard = card;
+                    roundWinner = Players[i]; // Assuming the order of cards played matches the order of players
+                }
+            }
+
+            return roundWinner;
+        }
+
+        public void CompleteTrick()
+        {
+
+
+
+            // Display the round winner in the UI
+            Player winner = CurrentTrick.Winner;
+            winner.CollectedCards.AddRange(CurrentTrick.CardsPlayed);
+            UpdateScores();
+
+            // Prepare for the next trick
+            CurrentTrick = new Trick();
+            CurrentPlayerIndex = Players.IndexOf(winner); // The winner starts the next trick
+        }
+
+        public Player DetermineGameWinner()
+        {
+            return Players.OrderBy(player => player.Score).First();
+        }
+
+
+
     }
+
+
 
 }

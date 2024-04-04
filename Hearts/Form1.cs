@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -12,10 +13,36 @@ namespace Hearts
 {
     public partial class Form1 : Form
     {
+
+        private Game game;
+        private List<ComboBox> cardSelectors;
         public Form1()
         {
             InitializeComponent();
-        
+            cardSelectors = new List<ComboBox> { cardList1, cardList2, cardList3, cardList4 };
+
+        }
+
+        private void StartNewGame()
+        {
+            // Initialize the game with player names and a score limit
+            game = new Game(new List<string> { player1.Text, player2.Text, player3.Text, player4.Text }, 100);
+            game.StartGame();
+
+            // Update the UI with the dealt cards
+            UpdatePlayerHandsUI();
+        }
+
+        private void UpdatePlayerHandsUI()
+        {
+            for (int i = 0; i < game.Players.Count; i++)
+            {
+                cardSelectors[i].Items.Clear();
+                foreach (var card in game.Players[i].Hand)
+                {
+                    cardSelectors[i].Items.Add(card.ToString());
+                }
+            }
         }
 
         private void label1_Click(object sender, EventArgs e)
@@ -91,6 +118,8 @@ namespace Hearts
                 return;
             }
 
+            game = new Game(playerNames, 100);
+
             // Transfer player names to game setup textboxes
             gameSetup1.Text = player1.Text;
             gameSetup2.Text = player2.Text;
@@ -114,6 +143,8 @@ namespace Hearts
             cardList3.Enabled = true;
             cardList4.Enabled = true;
 
+
+            
             // Enable "Deal 13 Cards" button and game setup textboxes
             DealCards.Enabled = true;
 
@@ -121,6 +152,9 @@ namespace Hearts
 
         private void startGame_Click(object sender, EventArgs e)
         {
+            game.StartGame();
+            EnableCardSelectionForCurrentPlayer();
+            button6.Enabled = true;
 
         }
 
@@ -130,29 +164,26 @@ namespace Hearts
             ShuffleDeck();
 
             // Re-deal the shuffled cards to players
-            dealCards_Click(sender, e)
+
         }
 
         private void dealCards(object sender, EventArgs e)
         {
-            // Initialize the deck
-            InitializeDeck();
+            game.DealCards();
+            UpdatePlayerHandsUI();
+            startGame.Enabled = true;
+            reShuffleCards.Enabled = true;
+            
+        }
 
-            // Shuffle the deck
-            ShuffleDeck();
-
-            // Determine the number of cards to deal to each player
-            int cardsPerPlayer = deck.Count / 4;
-
-            // Deal cards to each player
-            for (int i = 0; i < 4; i++)
+        private void EnableCardSelectionForCurrentPlayer()
+        {
+            int currentPlayerIndex = game.CurrentPlayerIndex;
+            foreach (var comboBox in cardSelectors)
             {
-                // Get the appropriate range of cards for the current player
-                List<string> playerHand = deck.GetRange(i * cardsPerPlayer, cardsPerPlayer);
-
-                // Update the UI to display the player's hand in the corresponding ComboBox
-                UpdatePlayerHandUI(i, playerHand);
+                comboBox.Enabled = false; // Disable all ComboBoxes
             }
+            cardSelectors[currentPlayerIndex].Enabled = true; // Enable the ComboBox for the current player
         }
 
         private List<string> deck;
@@ -178,46 +209,175 @@ namespace Hearts
         // Shuffle the deck
         private void ShuffleDeck()
         {
-            Random rng = new Random();
-            int n = deck.Count;
-            while (n > 1)
-            {
-                n--;
-                int k = rng.Next(n + 1);
-                string value = deck[k];
-                deck[k] = deck[n];
-                deck[n] = value;
-            }
+            game.DealCards();
+            UpdatePlayerHandsUI();
         }
 
         private void UpdatePlayerHandUI(int playerIndex, List<string> playerHand)
         {
             // Get the corresponding ComboBox for the player
-            ComboBox comboBox = null;
-            switch (playerIndex)
+            for (int i = 0; i < game.Players.Count; i++)
             {
-                case 0:
-                    comboBox = cardList1;
-                    break;
-                case 1:
-                    comboBox = cardList2;
-                    break;
-                case 2:
-                    comboBox = cardList3;
-                    break;
-                case 3:
-                    comboBox = cardList4;
-                    break;
+                cardSelectors[i].Items.Clear();
+                foreach (var card in game.Players[i].Hand)
+                {
+                    cardSelectors[i].Items.Add(card.ToString());
+                }
+            }
+        }
+
+        private void Game_GameEnded(object sender)
+        {
+            MessageBox.Show($"{game.Winner.Name} wins with a score of {game.Winner.Score}!", "Game Over");
+            var playAgain = MessageBox.Show("Do you want to play another round?", "Game Over", MessageBoxButtons.YesNo);
+            if (playAgain == DialogResult.Yes)
+            {
+                StartNewGame();
+            }
+            else
+            {
+                Close();
+            }
+        }
+
+        private void button6_Click(object sender, EventArgs e)
+        {
+            int playerIndex = game.CurrentPlayerIndex;
+            ComboBox currentPlayerCardList = cardSelectors[playerIndex];
+            int cardIndex = currentPlayerCardList.SelectedIndex;
+            
+            if (cardIndex >= 0  && !game.IsGameOver())
+            {
+                // Play the selected card
+                Card playedCard = game.Players[playerIndex].PlayCard(cardIndex);
+
+
+                // Add the played card to the current trick
+                game.CurrentTrick.CardsPlayed.Add(playedCard);
+                game.CurrentTrick.AddCard(playedCard, game.Players[playerIndex]);
+
+                UpdatePlayedCardUI(playerIndex, playedCard);
+                
+                // Check if the trick is complete (all players have played a card)
+                if (game.CurrentTrick.CardsPlayed.Count == game.Players.Count)
+                {
+                    // Determine the winner of the trick
+                    game.CurrentTrick.DetermineWinner(game.Players);
+
+                    // Display the round winner in the UI
+                    DisplayRoundWinner(game.CurrentTrick.Winner);
+                 
+                    
+                    // Move to the next player's turn
+                    game.NextPlayer();
+                    UpdateTurnIndicatorUI();
+
+                    // Prepare for the next trick
+                    game.Tricks.Add(game.CurrentTrick);
+                    game.CurrentTrick = new Trick();
+
+                    Scoring.UpdateScores(game.Players, game.Tricks);
+                    UpdateScoreDisplay();
+                }
+                else
+                {
+                    // Move to the next player's turn
+                    game.NextPlayer();
+                    UpdateTurnIndicatorUI();
+                }
+            }
+            else
+            {
+                MessageBox.Show("Please select a card to play.");
+            }
+        }
+
+        private void UpdatePlayedCardUI(int playerIndex, Card playedCard)
+        {
+            // Update the UI to show the played card
+            // For example, remove the played card from the player's ComboBox
+            ComboBox currentPlayerCardList = cardSelectors[playerIndex];
+            currentPlayerCardList.Items.RemoveAt(currentPlayerCardList.SelectedIndex);
+            currentPlayerCardList.SelectedIndex = -1;
+
+            // Additional UI updates to show the played card on the game board
+        }
+
+        private void UpdateTurnIndicatorUI()
+{
+    // Update the UI to indicate whose turn it is
+    // For example, highlight the current player's UI elements
+    foreach (var cardList in cardSelectors)
+    {
+        cardList.Enabled = false; // Disable all card selectors
+    }
+    cardSelectors[game.CurrentPlayerIndex].Enabled = true; // Enable the current player's card selector
+}
+        private void DisplayWinner(Player winner)
+        {
+            // Update the UI to show the winner's information
+            richTextBox1.Text = $"{winner.Name} wins the game with a score of {winner.Score}!";
+
+            // Optionally, ask the user if they want to play another game
+            var playAgain = MessageBox.Show("Do you want to play another game?", "Play Again", MessageBoxButtons.YesNo);
+            if (playAgain == DialogResult.Yes)
+            {
+                // Reset the game and UI for a new game
+                
+            }
+            else
+            {
+                // Close the application or perform other cleanup
+                this.Close();
+            }
+        }
+
+        private void StartNewRound()
+        {
+            game.StartNewRound();
+            UpdatePlayerHandsUI();
+        }
+
+        private void StartNextTrick()
+        {
+            game.CurrentTrick = new Trick();
+            EnableCardSelectionForCurrentPlayer();
+        }
+
+        private void CompleteTrick()
+        {
+            // Update scores and collect cards
+            game.UpdateScores();
+            foreach (var player in game.Players)
+            {
+                player.CollectedCards.AddRange(game.CurrentTrick.CardsPlayed);
             }
 
-            // Clear the ComboBox before adding new cards
-            comboBox.Items.Clear();
+            // Clear the current trick for the next one
+            game.CurrentTrick.CardsPlayed.Clear();
+        }
 
-            // Add the cards to the ComboBox
-            foreach (string card in playerHand)
-            {
-                comboBox.Items.Add(card);
-            }
+        private void DisplayRoundWinner(Player winner)
+        {
+            Console.WriteLine(winner.Name);
+            MessageBox.Show($"{winner.Name} wins the round!");
+            richTextBox1.Text += winner.Name + " wins the round";
+            
+            // If you have a label to display the round winner, you can update it like this:
+            // roundWinnerLabel.Text = $"{winner.Name} wins the round!";
+        }
+
+        private void UpdateScoreDisplay()
+        {
+            score1Box.Text = game.Players[0].Score.ToString();
+            score2Box.Text = game.Players[1].Score.ToString();
+            score3Box.Text = game.Players[2].Score.ToString();
+            score4Box.Text = game.Players[3].Score.ToString();
+
+            score1.Text = game.Players[0].Name;
+            score2.Text = game.Players[1].Name;
+            score3.Text = game.Players[2].Name;
+            score4.Text = game.Players[3].Name;
         }
     }
 }

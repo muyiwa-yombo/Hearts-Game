@@ -8,7 +8,7 @@ namespace Hearts
 {
     public class Deck
     {
-        private List<Card> cards;
+        public List<Card> cards { get; set; }
 
         public Deck()
         {

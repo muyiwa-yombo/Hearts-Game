@@ -8,6 +8,9 @@ C:\Users\Matthew de Kock\source\repos\Hearts\Hearts\obj\Debug\Hearts.csproj.Gene
 C:\Users\Matthew de Kock\source\repos\Hearts\Hearts\obj\Debug\Hearts.csproj.CoreCompileInputs.cache
 C:\Users\Matthew de Kock\source\repos\Hearts\Hearts\obj\Debug\Hearts.exe
 C:\Users\Matthew de Kock\source\repos\Hearts\Hearts\obj\Debug\Hearts.pdb
+C:\Users\Muyiwa\source\repos\muyiwa-yombo\OOP3-PROJECT-GROUP-4\Hearts\bin\Debug\Hearts.exe.config
+C:\Users\Muyiwa\source\repos\muyiwa-yombo\OOP3-PROJECT-GROUP-4\Hearts\bin\Debug\Hearts.exe
+C:\Users\Muyiwa\source\repos\muyiwa-yombo\OOP3-PROJECT-GROUP-4\Hearts\bin\Debug\Hearts.pdb
 C:\Users\Muyiwa\source\repos\muyiwa-yombo\OOP3-PROJECT-GROUP-4\Hearts\obj\Debug\Hearts.csproj.AssemblyReference.cache
 C:\Users\Muyiwa\source\repos\muyiwa-yombo\OOP3-PROJECT-GROUP-4\Hearts\obj\Debug\Hearts.Form1.resources
 C:\Users\Muyiwa\source\repos\muyiwa-yombo\OOP3-PROJECT-GROUP-4\Hearts\obj\Debug\Hearts.Properties.Resources.resources

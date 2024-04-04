@@ -1,22 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Hearts
 {
     public class Trick
     {
-        public List<Card> CardsPlayed { get; private set; }
-        public Player Winner { get; private set; }
-        public Suit LeadingSuit { get; private set; }
-        public bool HeartsBroken { get; private set; }
+        public List<Card> CardsPlayed { get; set; }
+        public Player Winner { get; set; }
+        public Suit LeadingSuit { get; set; }
+        public bool HeartsBroken { get; set; }
 
         public Trick()
         {
             CardsPlayed = new List<Card>();
+            Winner = null;
             HeartsBroken = false;
+           
         }
 
         public void AddCard(Card card, Player player)
@@ -26,17 +26,16 @@ namespace Hearts
                 LeadingSuit = card.Suit;
             }
 
-            if (card.Suit == Suit.Hearts)
+            if (card.Suit == Suit.Hearts || (card.Suit == Suit.Spades && card.Value == 12)) // Queen of Spades is value 12
             {
                 HeartsBroken = true;
             }
 
-            CardsPlayed.Add(card);
         }
 
         public void DetermineWinner(List<Player> players)
         {
-            if (CardsPlayed.Count == 4)
+            if (CardsPlayed.Count == players.Count) // Ensure all players have played
             {
                 Card winningCard = CardsPlayed
                     .Where(card => card.Suit == LeadingSuit)
@@ -51,5 +50,4 @@ namespace Hearts
             }
         }
     }
-
 }

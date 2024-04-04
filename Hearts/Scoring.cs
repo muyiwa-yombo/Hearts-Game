@@ -27,14 +27,47 @@ namespace Hearts
             return score;
         }
 
-        public static int CalculateTotalScore(List<Trick> tricks)
+        public static void UpdateScores(List<Player> players, List<Trick> tricks)
         {
-            int totalScore = 0;
+            int totalHearts = 0;
+            int totalQueenSpades = 0;
             foreach (Trick trick in tricks)
             {
-                totalScore += CalculateScore(trick);
+                Player winner = trick.Winner;
+                int trickScore = CalculateScore(trick);
+                winner.CollectedCards.AddRange(trick.CardsPlayed); // Assuming Player has a CollectedCards property
+                winner.RoundScore += trickScore; // Assuming Player has a RoundScore property
+
+                // Count total hearts and Queen of Spades for shooting the moon
+                totalHearts += trick.CardsPlayed.Count(card => card.Suit == Suit.Hearts);
+                totalQueenSpades += trick.CardsPlayed.Count(card => card.Suit == Suit.Spades && card.Value == 12);
             }
-            return totalScore;
+
+            // Check for Shooting the Moon
+            bool shotTheMoon = totalHearts == 13 && totalQueenSpades == 1;
+            if (shotTheMoon)
+            {
+                foreach (Player player in players)
+                {
+                    if (player.RoundScore == 26) // The player who shot the moon
+                    {
+                        player.Score += 0; // Shooting the moon results in zero points for the round
+                    }
+                    else
+                    {
+                        player.Score += 26; // Other players receive 26 points
+                    }
+                    player.RoundScore = 0; // Reset round score for next round
+                }
+            }
+            else
+            {
+                foreach (Player player in players)
+                {
+                    player.Score += player.RoundScore; // Add round score to total score
+                    player.RoundScore = 0; // Reset round score for next round
+                }
+            }
         }
     }
 
